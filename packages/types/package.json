@@ -33,6 +33,10 @@
     "clean": "backstage-cli package clean"
   },
   "dependencies": {},
+  "peerDependencies": {
+    "@types/react": "^16.13.1 || ^17.0.0",
+    "react": "^16.13.1 || ^17.0.0"
+  },
   "devDependencies": {
     "@backstage/cli": "^0.17.3-next.0",
     "@types/zen-observable": "^0.8.0",
