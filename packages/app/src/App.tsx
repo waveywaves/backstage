@@ -140,20 +140,20 @@ const AppRouter = app.getRouter();
 
 const routes = (
   <FlatRoutes>
-    <Route path="/" element={<Navigate to="catalog" />} />
+    <Route element={<Navigate to="catalog" />} />
     {/* TODO(rubenl): Move this to / once its more mature and components exist */}
-    <Route path="/home" element={<HomepageCompositionRoot />}>
+    <Route path="home" element={<HomepageCompositionRoot />}>
       {homePage}
     </Route>
-    <Route path="/catalog" element={<CatalogIndexPage />} />
+    <Route path="catalog" element={<CatalogIndexPage />} />
     <Route
-      path="/catalog/:namespace/:kind/:name"
+      path="catalog/:namespace/:kind/:name"
       element={<CatalogEntityPage />}
     >
       {entityPage}
     </Route>
     <Route
-      path="/catalog-import"
+      path="catalog-import"
       element={
         <RequirePermission permission={catalogEntityCreatePermission}>
           <CatalogImportPage />
@@ -161,7 +161,7 @@ const routes = (
       }
     />
     <Route
-      path="/catalog-graph"
+      path="catalog-graph"
       element={
         <CatalogGraphPage
           initialState={{
@@ -182,9 +182,9 @@ const routes = (
         />
       }
     />
-    <Route path="/docs" element={<TechDocsIndexPage />} />
+    <Route path="docs" element={<TechDocsIndexPage />} />
     <Route
-      path="/docs/:namespace/:kind/:name/*"
+      path="docs/:namespace/:kind/:name/*"
       element={<TechDocsReaderPage />}
     >
       {techDocsPage}
@@ -195,7 +195,7 @@ const routes = (
       </TechDocsAddons>
     </Route>
     <Route
-      path="/create"
+      path="create"
       element={
         <ScaffolderPage
           defaultPreviewTemplate={defaultPreviewTemplate}
@@ -213,35 +213,35 @@ const routes = (
         <LowerCaseValuePickerFieldExtension />
       </ScaffolderFieldExtensions>
     </Route>
-    <Route path="/explore" element={<ExplorePage />} />
+    <Route path="explore" element={<ExplorePage />} />
     <Route
-      path="/tech-radar"
+      path="tech-radar"
       element={<TechRadarPage width={1500} height={800} />}
     />
-    <Route path="/graphiql" element={<GraphiQLPage />} />
-    <Route path="/lighthouse" element={<LighthousePage />} />
-    <Route path="/api-docs" element={<ApiExplorerPage />} />
-    <Route path="/gcp-projects" element={<GcpProjectsPage />} />
-    <Route path="/newrelic" element={<NewRelicPage />} />
-    <Route path="/search" element={<SearchPage />}>
+    <Route path="graphiql" element={<GraphiQLPage />} />
+    <Route path="lighthouse" element={<LighthousePage />} />
+    <Route path="api-docs" element={<ApiExplorerPage />} />
+    <Route path="gcp-projects" element={<GcpProjectsPage />} />
+    <Route path="newrelic" element={<NewRelicPage />} />
+    <Route path="search" element={<SearchPage />}>
       {searchPage}
     </Route>
-    <Route path="/cost-insights" element={<CostInsightsPage />} />
+    <Route path="cost-insights" element={<CostInsightsPage />} />
     <Route
-      path="/cost-insights/investigating-growth"
+      path="cost-insights/investigating-growth"
       element={<CostInsightsProjectGrowthInstructionsPage />}
     />
     <Route
-      path="/cost-insights/labeling-jobs"
+      path="cost-insights/labeling-jobs"
       element={<CostInsightsLabelDataflowInstructionsPage />}
     />
-    <Route path="/settings" element={<UserSettingsPage />}>
-      <UserSettingsTab path="/advanced" title="Advanced">
+    <Route path="settings" element={<UserSettingsPage />}>
+      <UserSettingsTab path="advanced" title="Advanced">
         <AdvancedSettings />
       </UserSettingsTab>
     </Route>
-    <Route path="/azure-pull-requests" element={<AzurePullRequestsPage />} />
-    <Route path="/apache-airflow" element={<ApacheAirflowPage />} />
+    <Route path="azure-pull-requests" element={<AzurePullRequestsPage />} />
+    <Route path="apache-airflow" element={<ApacheAirflowPage />} />
   </FlatRoutes>
 );
 
