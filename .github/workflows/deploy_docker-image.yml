@@ -1,18 +1,34 @@
-name: Build and push Docker Hub image
+name: Build Image and Deploy Uffizzi Preview
 on:
+  push:
+    branches:
+      - master
   pull_request:
     types: [opened,synchronize,reopened]
 
 jobs:
-  build:
+  build-backstage:
+    name: Build and push `backstage`
     runs-on: ubuntu-latest
-
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
     steps:
+      - name: Set Build Variables
+        run: |
+          if [[ "$GITHUB_REF" =~ ^refs/tags/v* ]]; then
+            echo "Using TAG mode: $GITHUB_REF_NAME"
+            echo "REL_VERSION=$GITHUB_REF_NAME" >> $GITHUB_ENV
+            echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+          else
+            echo "Using BRANCH mode: v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER"
+            echo "REL_VERSION=v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+            echo "REL_VERSION_STRICT=$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+          fi
       - name: checkout
         uses: actions/checkout@v2
         with:
           path: backstage
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.client_payload.version }}
 
       - name: setup-node
         uses: actions/setup-node@v1
@@ -62,11 +78,11 @@ jobs:
       - name: create-app
         run: npx @backstage/create-app
         env:
-          BACKSTAGE_APP_NAME: example-app
+          BACKSTAGE_APP_NAME: uffizzi-app
 
       - name: yarn build
         run: yarn build
-        working-directory: ./example-app
+        working-directory: ./uffizzi-app
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -78,12 +94,60 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and push
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/backstage-${{ env.REL_VERSION_STRICT }}
+
+      - name: Build and Push Image to GHCR
         uses: docker/build-push-action@v3
         with:
-          context: './example-app'
-          file: ./example-app/packages/backend/Dockerfile
+          context: './uffizzi-app'
+          file: ./uffizzi-app/packages/backend/Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/backstage:latest
-            ghcr.io/${{ github.repository_owner }}/backstage:${{ github.event.pull_request.head.sha }}
+
+  render-compose-file:
+    name: Render Docker Compose File
+    runs-on: ubuntu-latest
+    needs: 
+      - build-backstage
+    outputs:
+      compose-file-cache-key: ${{ steps.hash.outputs.hash }}
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v3
+      - name: Render Compose File
+        run: |
+          BACKSTAGE_IMAGE=$(echo ${{ needs.build-backstage.outputs.tags }})
+          export BACKSTAGE_IMAGE
+          # Render simple template from environment variables.
+          envsubst < contrib/docker-compose/docker-compose.template.yml > docker-compose.rendered.yml
+          cat docker-compose.rendered.yml
+      - name: Hash Rendered Compose File
+        id: hash
+        run: echo "::set-output name=hash::$(md5sum docker-compose.rendered.yml | awk '{ print $1 }')"
+      - name: Cache Rendered Compose File
+        uses: actions/cache@v3
+        with:
+          path: docker-compose.rendered.yml
+          key: ${{ steps.hash.outputs.hash }}
+
+  deploy-uffizzi-preview:
+    name: Use Remote Workflow to Preview on Uffizzi
+    needs: render-compose-file
+    uses: UffizziCloud/preview-action/.github/workflows/reusable.yaml@add_credentials
+    if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
+    with:
+      compose-file-cache-key: ${{ needs.render-compose-file.outputs.compose-file-cache-key }}
+      compose-file-cache-path: docker-compose.rendered.yml
+      username: vibhav.bobade+backstage@uffizzi.com
+      server: https://app.uffizzi.com
+      project: backstage-zhix
+    secrets:
+      password: ${{ secrets.UFFIZZI_PASSWORD }}
+    permissions:
+      contents: read
+      pull-requests: write
