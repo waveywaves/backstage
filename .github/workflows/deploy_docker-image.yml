@@ -1,7 +1,7 @@
 name: Build and push Docker Hub image
 on:
-  repository_dispatch:
-    types: [release-published]
+  pull_request:
+    types: [opened,synchronize,reopened]
 
 jobs:
   build:
@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: backstage
-          ref: v${{ github.event.client_payload.version }}
+          ref: ${{ github.event.client_payload.version }}
 
       - name: setup-node
         uses: actions/setup-node@v1
