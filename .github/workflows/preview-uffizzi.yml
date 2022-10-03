@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       compose-file-cache-key: ${{ steps.hash.outputs.hash }}
+      pr-number: ${{ steps.pr.outputs.number }}
     steps:
       - name: 'Download artifacts'
         uses: actions/github-script@v6
@@ -44,6 +45,9 @@ jobs:
         with:
           path: docker-compose.rendered.yml
           key: ${{ steps.hash.outputs.hash }}
+      - name: Read PR Number File
+        id: pr
+        run: echo "::set-output name=number::$( cat pr_number.txt )"
 
   deploy-uffizzi-preview:
     name: Use Remote Workflow to Preview on Uffizzi
@@ -55,6 +59,7 @@ jobs:
       compose-file-cache-key: ${{ needs.cache-compose-file.outputs.compose-file-cache-key }}
       compose-file-cache-path: docker-compose.rendered.yml
       server: https://app.uffizzi.com/
+      pr-number: ${{ needs.cache-compose-file.outputs.pr-number }}
     permissions:
       contents: read
       pull-requests: write
