@@ -171,7 +171,7 @@ jobs:
           path: docker-compose.rendered.yml
           retention-days: 2
       - name: Serialize PR Event to File
-        run: echo ${{ toJSON(github.event) }} > event.json
+        run: echo '${{ toJSON(github.event) }}' > event.json
       - name: Upload PR Event as Artifact
         uses: actions/upload-artifact@v3
         with:
