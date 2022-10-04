@@ -167,6 +167,14 @@ jobs:
       - name: Upload Rendered Compose File as Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: docker-compose
+          name: preview-spec
           path: docker-compose.rendered.yml
+          retention-days: 2
+      - name: Serialize PR Event to File
+        run: echo ${{ toJSON(github.event) }} > event.json
+      - name: Upload PR Event as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: preview-spec
+          path: event.json
           retention-days: 2

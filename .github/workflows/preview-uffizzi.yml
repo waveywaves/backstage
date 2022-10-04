@@ -25,7 +25,7 @@ jobs:
                run_id: context.payload.workflow_run.id,
             });
             let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name == "docker-compose"
+              return artifact.name == "preview-spec"
             })[0];
             let download = await github.rest.actions.downloadArtifact({
                owner: context.repo.owner,
@@ -34,9 +34,9 @@ jobs:
                archive_format: 'zip',
             });
             let fs = require('fs');
-            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/docker-compose.zip`, Buffer.from(download.data));
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/preview-spec.zip`, Buffer.from(download.data));
       - name: 'Unzip artifact'
-        run: unzip docker-compose.zip
+        run: unzip preview-spec.zip
       - name: Hash Rendered Compose File
         id: hash
         run: echo "::set-output name=hash::$(md5sum docker-compose.rendered.yml | awk '{ print $1 }')"
@@ -45,9 +45,14 @@ jobs:
         with:
           path: docker-compose.rendered.yml
           key: ${{ steps.hash.outputs.hash }}
-      - name: Read PR Number File
+      - name: Read PR Number From Event File
         id: pr
-        run: echo "::set-output name=number::$( cat pr_number.txt )"
+        run: echo "::set-output name=number::$( jq .number event.json )"
+      - name: DEBUG - Outputs
+        run: |
+          echo "PR number: ${{ steps.pr.outputs.number }}"
+          echo "Compose file hash: ${{ steps.hash.outputs.hash }}"
+          cat event.json
 
   deploy-uffizzi-preview:
     name: Use Remote Workflow to Preview on Uffizzi
