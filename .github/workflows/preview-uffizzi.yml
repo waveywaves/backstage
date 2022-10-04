@@ -47,6 +47,7 @@ jobs:
         if: ${{ fromJSON(env.EVENT_JSON).action != 'closed' }}
         run: echo "::set-output name=hash::$(md5sum docker-compose.rendered.yml | awk '{ print $1 }')"
       - name: Cache Rendered Compose File
+        if: ${{ fromJSON(env.EVENT_JSON).action != 'closed' }}
         uses: actions/cache@v3
         with:
           path: docker-compose.rendered.yml
