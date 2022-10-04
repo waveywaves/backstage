@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tags: ${{ steps.meta.outputs.tags }}
+    if: ${{ github.event.action != 'closed' }}
     steps:
       - name: Set Build Variables
         run: |
@@ -156,14 +157,6 @@ jobs:
           # Render simple template from environment variables.
           envsubst < .github/uffizzi/docker-compose.template.yml > docker-compose.rendered.yml
           cat docker-compose.rendered.yml
-      - name: Hash Rendered Compose File
-        id: hash
-        run: echo "::set-output name=hash::$(md5sum docker-compose.rendered.yml | awk '{ print $1 }')"
-      - name: Cache Rendered Compose File
-        uses: actions/cache@v3
-        with:
-          path: docker-compose.rendered.yml
-          key: ${{ steps.hash.outputs.hash }}
       - name: Upload Rendered Compose File as Artifact
         uses: actions/upload-artifact@v3
         with:

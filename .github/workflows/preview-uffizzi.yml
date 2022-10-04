@@ -37,8 +37,14 @@ jobs:
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/preview-spec.zip`, Buffer.from(download.data));
       - name: 'Unzip artifact'
         run: unzip preview-spec.zip
+      - name: Read Event into ENV
+        run: |
+          echo 'EVENT_JSON<<EOF' >> $GITHUB_ENV
+          cat event.json >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
       - name: Hash Rendered Compose File
         id: hash
+        if: ${{ fromJSON(env.EVENT_JSON).action != 'closed' }}
         run: echo "::set-output name=hash::$(md5sum docker-compose.rendered.yml | awk '{ print $1 }')"
       - name: Cache Rendered Compose File
         uses: actions/cache@v3
@@ -47,7 +53,7 @@ jobs:
           key: ${{ steps.hash.outputs.hash }}
       - name: Read PR Number From Event File
         id: pr
-        run: echo "::set-output name=number::$( jq .number event.json )"
+        run: echo "::set-output name=number::${{ fromJSON(env.EVENT_JSON).number }}"
       - name: DEBUG - Outputs
         run: |
           echo "PR number: ${{ steps.pr.outputs.number }}"
@@ -59,7 +65,6 @@ jobs:
     needs:
       - cache-compose-file
     uses: UffizziCloud/preview-action/.github/workflows/reusable.yaml@contexts
-    #if: ${{ github.event.workflow_run.event.action != 'closed' }}
     with:
       compose-file-cache-key: ${{ needs.cache-compose-file.outputs.compose-file-cache-key }}
       compose-file-cache-path: docker-compose.rendered.yml
@@ -69,16 +74,3 @@ jobs:
       contents: read
       pull-requests: write
       id-token: write
-
-#  delete-uffizzi-preview:
-#    name: Use Remote Workflow to Delete an Existing Preview
-#    uses: UffizziCloud/preview-action/.github/workflows/reusable.yaml@v2
-#    if: ${{ github.event.workflow_run.event.action == 'closed' }}
-#    with:
-#      compose-file-cache-key: ''
-#      compose-file-cache-path: docker-compose.rendered.yml
-#      server: https://app.uffizzi.com/
-#    permissions:
-#      contents: read
-#      pull-requests: write
-#      id-token: write
