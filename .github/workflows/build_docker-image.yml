@@ -171,3 +171,17 @@ jobs:
           name: preview-spec
           path: event.json
           retention-days: 2
+
+  delete-preview:
+    name: Call for Preview Deletion
+    runs-on: ubuntu-latest
+    if: ${{ github.event.action == 'closed' }}
+    steps:
+      - name: Serialize PR Event to File
+        run: echo '${{ toJSON(github.event) }}' > event.json
+      - name: Upload PR Event as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: preview-spec
+          path: event.json
+          retention-days: 2
