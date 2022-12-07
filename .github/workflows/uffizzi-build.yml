@@ -2,6 +2,9 @@ name: Preview (build)
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
+    paths-ignore:
+      - 'microsite/**'
+      - '*.md'
 
 jobs:
   build-backstage:
@@ -134,8 +137,7 @@ jobs:
       - name: Serialize PR Event to File
         run: |
           cat << EOF > event.json
-          ${{ toJSON(github.event) }} 
-
+          ${{ toJSON(github.event) }}
           EOF
       - name: Upload PR Event as Artifact
         uses: actions/upload-artifact@v3
@@ -151,7 +153,10 @@ jobs:
     steps:
       # If this PR is closing, we will not render a compose file nor pass it to the next workflow.
       - name: Serialize PR Event to File
-        run: echo '${{ toJSON(github.event) }}' > event.json
+        run:  |
+          cat << EOF > event.json
+          ${{ toJSON(github.event) }}
+          EOF
       - name: Upload PR Event as Artifact
         uses: actions/upload-artifact@v3
         with:
